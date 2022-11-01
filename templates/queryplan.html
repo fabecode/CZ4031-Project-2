@@ -1,0 +1,53 @@
+{% extends "base.html" %} {% block title %} Query Plan {% endblock %} {% block content
+    %}
+    <h1><center>Optimised Query</center></h1>
+    <div>
+      <h3>Submitted Query</h3>
+      {% if query %}
+      <div class="code">{{query}}</div>
+      {% else %}
+      <span>Submit your query above to begin</span>
+      {% endif %}
+      <h3>Key Metrics</h3>
+      <table>
+        <tr>
+          <th>Total Cost</th>
+          <td>{{total_cost}}</td>
+        </tr>
+        <tr>
+          <th>Number of index scans</th>
+          <td>{{total_index_scan}}</td>
+        </tr>
+        <tr>
+          <th>Number of sequential scans</th>
+          <td>{{total_seq_scan}}</td>
+        </tr>
+        <tr>
+          <th>Number of rows</th>
+          <td>{{total_plan_rows}}</td>
+        </tr>
+      </table>
+      <h3 class="mt-3">Optimal QEP - Annotations</h3>
+     {% if annotations %}
+      <ol>
+        {% for annotation in annotations %}
+        <li>{{annotation}}</li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <span>Insert query to begin</span>
+      {% endif %} 
+      <h3 class="mt-3">Optimal QEP - Visualization</h3>
+      <h3 class="mt-3">Alternative Query Plans - Annotations</h3>
+    </div>
+    <div class="text-center">
+      <a href="/">
+        <form action="/">
+          <button id="btnFetch" type="submit" class="btn btn-primary" style = "background-color:#2E455A">
+            Input New SQL Query
+          </button>
+        </form>
+      </a>
+    </div>
+    
+{% endblock %}

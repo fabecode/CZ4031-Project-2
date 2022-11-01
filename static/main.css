@@ -1,0 +1,49 @@
+body {
+  background-color: #F2F2F2;
+  color: #2E455A;
+  line-height: 2;
+  text-align: justify;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+select {
+  display: block;
+  margin-bottom: 20px;
+  background-color: #F2F2F2;
+  color: #2E455A;
+  padding: 5px;
+  padding-left: 15px;
+  padding-right: 15px;
+  border: 2px solid #2E455A;
+}
+
+img {
+  display: block;
+  margin: 20px auto 20px auto;
+}
+
+th {
+  border: 2px solid lightgray;
+  padding-right: 20px;
+}
+
+td {
+  border: 2px solid lightgray;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+textarea {
+  display: block;
+  border: 1px solid lightgray;
+  margin: 30px auto;
+}
+
+.code {
+  background: rgb(224, 224, 224);
+  color: #1062a1;
+  border-radius: 5px;
+  padding: 5px 15px 5px 15px;
+  margin: 30px auto 30px auto;
+}
