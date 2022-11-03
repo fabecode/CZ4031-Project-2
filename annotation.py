@@ -62,16 +62,22 @@ def bitmapAnno(queryInput):
     return result
 
 def hashaggAnno(queryInput):
-
+    result = f"With {italic(queryInput['Node Type'])} function, the DBMS hashes the query rows into memory, for use by its parent operation."
+    
     return result
 
 def hashjoinAnno(queryInput):
+    result = f"This operation {italic(queryInput['Node Type'])} joins the results from the previous operations by using a hash {bold(query_plan['Join Type'])} {bold('Join')}"
 
+    if "Hash Join" in queryInput:
+        result += f" on the condition: {green(queryInput['Hash Cond'].replace('::text', ''))}"
+
+    result += "."
     return result
 
 def indexAnno(queryInput):
     #Default mentioning type of scan and definition
-    result = f"With {italics(query_plan['Node Type'])} operation, the DBMS is scanning the row in specified range of index."
+    result = f"With {italic(queryInput['Node Type'])} operation, the DBMS is scanning the row in specified range of index."
 
     if "indexCond" in queryInput:
         result = result + " Condition found: " + green(queryInput["indexCond"].replace('::text','') + ".") #::text is unlimited char in postgresql
@@ -85,21 +91,89 @@ def indexAnno(queryInput):
 
 def indexonlyAnno(queryInput):
 
+    result = f"With {italic(queryInput['Node Type'])} operation, the DBMS is scanning the row using an index table {bold(queryInput['Index Name'])}"
+
+    if "indexCond" in queryInput:
+        result += " with condition" + green(
+            queryInput["indexCond"].replace("::text", "")
+        )
+
+    result += ". The resulting record obtained from the index table is as such."
+
+    # Obtain the filtered attribute and remove unnecessary strings
+    if "Filter" in queryInput:
+        result += f" The result will then be filtered by {bold(queryInput['Filter'].replace('::text', ''))}."
+
     return result
 
 def mergejoinAnno(queryInput):
+
+    result = f"The operation {italic(queryInput['Node Type'])} joins the sorted results using join keys from sub-operations"
+
+    if "Merge Join" in queryInput:
+        result += " with condition " + green(
+            queryInput["Merge Join"].replace("::text", "")
+        )
+
+    # Checking join type
+    if "Join Type" == "Semi":
+        result += " results only returns records from the left relation"
+
+    result += "."
 
     return result
 
 def nestloopAnno(queryInput):
 
+    result = f"The operation {italic(queryInput['Node Type'])} performs a join or search. For every row the first child produces, the corresponding node will be looked up in the second node."
     return result
 
 def seqscanAnno(queryInput):
 
+    result = f"The operation {italic(queryInput['Node Type'])} operation performs a sequential scan on the relation "
+
+    # Retrieve relation name from query input
+    if "Relation Name" in queryInput:
+        result += green(queryInput["Relation Name"])
+
+    # Retrieve the alias from query plan if there is an alternative name
+    if "Alias" in queryInput:
+        if queryInput["Relation Name"] != queryInput["Alias"]:
+            result += f" has alias named {red(queryInput['Alias'])}"
+
+    # Obtain the filtered attribute and remove unnecessary strings
+    if "Filter" in queryInput:
+        result += f" will be filtered with the condition {bold(queryInput['Filter'].replace('::text', ''))}"
+
+    result += "."
+
     return result
 
 def sortAnno(queryInput):
+
+    result = (
+        f"The {italic(queryInput['Node Type'])} operation performs a sort on the rows "
+    )
+
+    # If sorting in descending order
+    if "DESC" in queryInput["Sort Key"]:
+        result += (
+            green(str(queryInput["Sort Key"].replace("DESC", "")))
+            + " in descending order"
+        )
+
+    # If sorting in ascending order
+    elif "ASC" in queryInput["Sort Key"]:
+        result += (
+            red(str(queryInput["Sort Key"].replace("ASC", "")))
+            + " in ascending order"
+        )
+
+    # Else specify the attribute
+    else:
+        result += f"based on {bold(str(queryInput['Sort Key']))}"
+
+    result += "."
 
     return result
 
