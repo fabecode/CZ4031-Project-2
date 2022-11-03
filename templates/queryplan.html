@@ -1,5 +1,7 @@
 {% extends "base.html" %} {% block title %} Query Plan {% endblock %} {% block content
     %}
+<div class="container-form">
+  <div class="wrap-form">
     <h1><center>Optimised Query</center></h1>
     <div>
       <h3>Submitted Query</h3>
@@ -31,7 +33,12 @@
      {% if annotations %}
       <ol>
         {% for annotation in annotations %}
-        <li>{{annotation}}</li>
+        <li>
+          <div class="tooltipright">
+            {{annotation[0]}}
+            <span class="toolttext">{{annotation[1]}}</span>
+          </div>
+        </li>
         {% endfor %}
       </ol>
       {% else %}
@@ -49,5 +56,7 @@
         </form>
       </a>
     </div>
+  </div>
+</div>
     
 {% endblock %}

@@ -19,7 +19,7 @@ class FlaskApp:
                     #Currently hardcoded till linked to db
                     render_args = {
                         "query": query,
-                        "annotations": ["Testing explanation 1", "Testing explanation 2"],
+                        "annotations": [["SELECT * FROM hhh"," THE COST IS dhihd"], ["WHERE 888","The COst is bdif"]],
                         "total_cost": 100,
                         "total_plan_rows": 100,
                         "total_seq_scan": 100,

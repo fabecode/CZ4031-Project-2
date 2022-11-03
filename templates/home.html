@@ -1,6 +1,8 @@
 {% extends "base.html" %} {% block title %} Request Query {% endblock %} 
 {% block content %}
-    <h1><center>Query Optimiser</center></h1>
+<div class="container-form">
+  <div class="wrap-form">
+    <h1 class="form-title"><center>Query Optimiser</center></h1>
     <div class="px-5">
       <div class="mt-3">
         <h3>Select your database schema</h3>
@@ -20,6 +22,7 @@
               name="queryText"
               rows="10"
               placeholder="SELECT * FROM table;"
+              required
             ></textarea>
             <div class="text-center">
               <button id="btnFetch" type="submit" class="btn btn-primary" style = "background-color:#2E455A">
@@ -29,4 +32,6 @@
           </form>
         </div>
       </div>
-    {% endblock %}
+    </div>
+  </div>
+{% endblock %}
