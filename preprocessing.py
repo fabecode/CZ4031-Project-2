@@ -1,6 +1,7 @@
 import psycopg2
 import configparser
 import json
+from annotation import *
 
 
 class Database:
