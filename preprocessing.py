@@ -31,6 +31,7 @@ class Database:
                          "enable_tidscan"]
 
         self.scanHash = {}
+        self.joinHash = {}
 
     def query(self, query):
         """
@@ -46,8 +47,10 @@ class Database:
 
         self.scans(qep["Plan"])
         self.AQPwrapper(query)
-        with open(f'hash.json', 'w', encoding='utf-8') as f:
+        with open(f'scanhash.json', 'w', encoding='utf-8') as f:
             json.dump(self.scanHash, f, ensure_ascii=False, indent=4)
+        with open(f'joinhash.json', 'w', encoding='utf-8') as f:
+            json.dump(self.joinHash, f, ensure_ascii=False, indent=4)
         return qep
 
     def AQPwrapper(self, query):
@@ -96,6 +99,8 @@ class Database:
                    f"SET enable_tidscan=ON;"
         self.cursor.execute(setQuery)
         print(len(temp))
+        for i in output:
+            self.scans(i["Plan"])
 
     def aqp(self, query, setQuery):
         self.cursor.execute(setQuery)
@@ -103,50 +108,6 @@ class Database:
         self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
         aqp = self.cursor.fetchall()[0][0][0]
         return aqp
-
-
-    # def aqp(self, query):
-    #     temp = set()
-    #     output = list()
-    #     for i in self.possible:
-    #         setQuery = f"SET {i}=OFF"
-    #         showQuery = f"SHOW {i}"
-    #         self.cursor.execute(setQuery)
-    #         self.cursor.execute(showQuery)
-    #         #print(self.cursor.fetchall())
-    #
-    #         self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
-    #         aqp = self.cursor.fetchall()[0][0][0]
-    #         j = json.dumps(aqp)
-    #         if j not in temp:
-    #             temp.add(j)
-    #             output.append((i, aqp))
-    #
-    #         setQuery = f"SET {i}=ON"
-    #         self.cursor.execute(setQuery)
-    #         self.cursor.execute(showQuery)
-    #         #print(self.cursor.fetchall())
-    #
-    #     for i in output:
-    #         with open(f'{i[0]}.json', 'w', encoding='utf-8') as f:
-    #             json.dump(i[1], f, ensure_ascii=False, indent=4)
-    #     self.test(query)
-
-    # def test(self, query):
-    #     setQuery = f"SET enable_hashjoin=OFF"
-    #     self.cursor.execute(setQuery)
-    #     setQuery = f"SET enable_indexscan=OFF"
-    #     self.cursor.execute(setQuery)
-    #     self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
-    #     aqp = self.cursor.fetchall()[0][0][0]
-    #
-    #     with open(f'enable_hashjoin_enable_indexscan.json', 'w', encoding='utf-8') as f:
-    #         json.dump(aqp, f, ensure_ascii=False, indent=4)
-    #
-    #     setQuery = f"SET enable_hashjoin=ON"
-    #     self.cursor.execute(setQuery)
-    #     setQuery = f"SET enable_indexscan=ON"
-    #     self.cursor.execute(setQuery)
 
     def scans(self, qep):
         """
@@ -157,17 +118,36 @@ class Database:
         if qep == {}:
             return
 
+        # grabbing scan type nodes
+        if "Relation Name" in qep and qep["Relation Name"] in self.scanHash:
+            if qep not in self.scanHash[qep["Relation Name"]]:
+                self.scanHash[qep["Relation Name"]].append(qep)
+        elif "Relation Name" in qep and qep["Relation Name"] not in self.scanHash:
+            self.scanHash[qep["Relation Name"]] = [qep]
+
+        # grabbing merge join type nodes
+        if "Node Type" in qep and qep["Node Type"] == "Merge Join":
+            temp = qep.copy()
+            temp.pop("Plans")
+            if temp["Merge Cond"] in self.joinHash:
+                if temp not in self.joinHash[temp["Merge Cond"]]:
+                    self.joinHash[temp["Merge Cond"]].append(temp)
+            else:
+                self.joinHash[temp["Merge Cond"]] = [temp]
+
+        # grabbing hash join type nodes
+        if "Node Type" in qep and qep["Node Type"] == "Hash Join":
+            temp = qep.copy()
+            temp.pop("Plans")
+            if temp["Hash Cond"] in self.joinHash:
+                if temp not in self.joinHash[temp["Hash Cond"]]:
+                    self.joinHash[temp["Hash Cond"]].append(temp)
+            else:
+                self.joinHash[temp["Hash Cond"]] = [temp]
+
         if "Plans" in qep:
             for i in qep["Plans"]:
-                for j in range(len(qep["Plans"])):
-                    if "Relation Name" in qep["Plans"][j] and qep["Plans"][j]["Relation Name"] in self.scanHash:
-                        if qep["Plans"][j] not in self.scanHash[qep["Plans"][j]["Relation Name"]]:
-                            self.scanHash[qep["Plans"][j]["Relation Name"]].append(qep["Plans"][j])
-                    elif "Relation Name" in qep["Plans"][j] and qep["Plans"][j]["Relation Name"] not in self.scanHash:
-                        self.scanHash[qep["Plans"][j]["Relation Name"]] = [qep["Plans"][j]]
-
                 self.scans(i)
-
 
     def closeConnection(self):
         """
