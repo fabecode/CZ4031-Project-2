@@ -1,0 +1,167 @@
+html, body, #root, #app, #app>div {
+	height: 100%
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(-45deg, #471069, #3C6B9E, #3698B8, #30C5D2, #B0F7FF);
+	background-size: 400% 500%;
+	animation: gradient 10s ease infinite;
+}
+
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+html,body
+{
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    font-family: 'Trebuchet MS';
+}
+
+
+/* 
+ #463072, #5B588E, #7080AA, #86A7C7, #9BCFE3, #B0F7FF
+ #471069, #452777, #423E84, #3C6B9E, #3698B8, #30C5D2
+ #708BB1, #B48AA5, #DD95A3, #EBB3B2, #F8DCD1, #F3EBE9
+body {
+  background-color: #F2F2F2;
+  color: #2E455A;
+  line-height: 2;
+  text-align: justify;
+  padding-left: 15px;
+  padding-right: 15px;
+} */
+
+
+.container-form {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+}
+/* background: #a64bf4;
+    background: -webkit-linear-gradient(45deg,#00dbde,#fc00ff);
+    background: -o-linear-gradient(45deg,#00dbde,#fc00ff);
+    background: -moz-linear-gradient(45deg,#00dbde,#fc00ff);
+    background: linear-gradient(45deg,#00dbde,#fc00ff); */
+.wrap-form {
+  width: 50%;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 42px 55px 45px;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+.form-title {
+  display: block;
+  font-family: 'Trebuchet MS';
+  font-weight: bolder;
+  font-size: 39px;
+  color: #333;
+  line-height: 1.2;
+  text-align: center;
+  padding-bottom: 44px;
+}
+
+select {
+  display: block;
+  margin-bottom: 20px;
+  background-color: #F2F2F2;
+  color: #2E455A;
+  padding: 5px;
+  padding-left: 15px;
+  padding-right: 15px;
+  border: 2px solid #2E455A;
+}
+
+img {
+  display: block;
+  margin: 20px auto 20px auto;
+}
+
+th {
+  border: 2px solid lightgray;
+  padding-right: 20px;
+}
+
+td {
+  border: 2px solid lightgray;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+textarea {
+  display: block;
+  border: 1px solid lightgray;
+  margin: 30px auto;
+}
+
+.code {
+  background: rgb(224, 224, 224);
+  color: #1062a1;
+  border-radius: 5px;
+  padding: 5px 15px 5px 15px;
+  margin: 30px auto 30px auto;
+}
+.tooltipright{
+  position: relative;
+  display: inline-block;
+  border-bottom: 2px dotted blue;
+  }
+.tooltipright .toolttext {
+  visibility: hidden;
+  width: max-content;
+  height:max-content;
+  background-color:lightsalmon;
+  color: black;
+  text-align: center;
+  border-radius: 4px;
+  padding: 6px ;
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 0;
+  left: 120%;
+  }
+.tooltipright:hover .toolttext {
+  visibility: visible;
+  }
+  /*left position*/
+.tooltipleft{
+  position: relative;
+  display: inline-block;
+  border-bottom: 2px dotted blue;
+  }
+.tooltipleft .toolttextleft {
+  visibility: hidden;
+  width: 200px;
+  height:50px;
+  background-color:lightsalmon;
+  color: black;
+  text-align: center;
+  border-radius: 4px;
+  padding: 5px ;
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+  right: 130%;
+  }
+.tooltipleft:hover .toolttextleft {
+  visibility: visible;
+  }
