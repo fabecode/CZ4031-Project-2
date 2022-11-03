@@ -30,17 +30,28 @@
         </tr>
       </table>
       <h3 class="mt-3">Optimal QEP - Annotations</h3>
-     {% if annotations %}
-      <ol>
+          <ol>
         {% for annotation in annotations %}
         <li>
           <div class="tooltipright">
             {{annotation[0]}}
-            <span class="toolttext">{{annotation[1]}}</span>
           </div>
         </li>
         {% endfor %}
       </ol>
+      
+     {% if annotations %}
+      <table>
+      <th>Query Line</th>
+      <th>Annotation</th>
+      {% for annotation in annotations %}
+      <tr>
+        <td>{{annotation[0]}}</td>
+        <td>{{annotation[1]}}</td>
+      </tr>
+      {% endfor %}
+     </table>
+
       {% else %}
       <span>Insert query to begin</span>
       {% endif %} 
