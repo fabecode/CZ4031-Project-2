@@ -1,5 +1,5 @@
 from preprocessing import Database
-
+from annotation import *
 
 def main():
     query = ""
