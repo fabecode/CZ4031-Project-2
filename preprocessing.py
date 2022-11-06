@@ -33,6 +33,71 @@ class Database:
 
         self.scanHash = {}
         self.joinHash = {}
+        self.comparison = {}
+
+    def print(self):
+        print(self.comparison)
+
+    def compare(self, qep):
+        """
+        Recursively compares the qep with all other aqp
+        :param qep: Qeury Execution Plan
+        :return: None, annotation saved in self.comparison
+        """
+        if qep == {}:
+            return
+
+        # grabbing scan type nodes
+        if "Relation Name" in qep and qep["Relation Name"] in self.scanHash:
+            key = qep["Relation Name"]
+            possible = self.scanHash[key]
+            seen = {}
+            for j in possible:
+                if j["Node Type"] not in seen:
+                    seen[j["Node Type"]] = j["Total Cost"]
+                elif j["Node Type"] in seen and seen[j["Node Type"]] > j["Total Cost"]:
+                    seen[j["Node Type"]] = j["Total Cost"]
+            seen[qep["Node Type"]] = qep["Total Cost"]
+            output = ""
+            output += f"{qep['Node Type']} done on {qep['Relation Name']} with a cost of {qep['Total Cost']}. "
+            for key, value in seen.items():
+                if key != qep["Node Type"]:
+                    output += f"{qep['Node Type']} is chosen as choosing {key} costs {(value/seen[qep['Node Type']]):.3f} more with a cost of {value}. "
+            self.comparison[qep["Relation Name"]] = output
+
+
+        # grabbing merge join type nodes
+        if "Node Type" in qep and qep["Node Type"] == "Merge Join":
+            key = qep["Merge Cond"]
+            possible = self.joinHash[key]
+            for j in possible:
+                cost = j["Total Cost"]
+
+        # grabbing hash join type nodes
+        if "Node Type" in qep and qep["Node Type"] == "Hash Join":
+            key = qep["Hash Cond"]
+            possible = self.joinHash[key]
+            for j in possible:
+                cost = j["Total Cost"]
+
+        if "Plans" in qep:
+            for i in qep["Plans"]:
+                self.compare(i)
+
+    def checkValidQuery(self, query):
+        """
+        Tries to execute query and check for vaildity. Returns a single row on valid query. Else returns None
+        :param query:
+        :return:
+        """
+
+        try:
+            self.cursor.execute(query)
+            results = self.cursor.fetchone()
+            return results
+        except Exception as e:
+            return None
+
 
     def query(self, query):
         """
@@ -157,3 +222,17 @@ class Database:
         """
         self.cursor.close()
         self.conn.close()
+
+
+if __name__=='__main__':
+    db = Database()
+    #query = "select s_acctbal, s_name, n_name, p_partkey, p_mfgr, s_address, s_phone, s_comment from PART, SUPPLIER, PARTSUPP, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and p_size = 30 and p_type like '%STEEL' and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA' and ps_supplycost = (select min(ps_supplycost) from PARTSUPP, SUPPLIER, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA') order by s_acctbal desc, n_name, s_name, p_partkey limit 100;"
+    query = 123
+    if db.checkValidQuery(query) != None:
+        qep = db.query(query)
+        print(qep["Plan"])
+        db.compare(qep["Plan"])
+        db.print()
+    else:
+        pass
+    db.closeConnection()
