@@ -1,8 +1,14 @@
 from flask import Flask, render_template, redirect, request
+from preprocessing import Database
+import networkx as nx
+import matplotlib.pyplot as plt
+import random
 
+##################################### Flask App #####################################
 class FlaskApp:
     def __init__(self):
         self.app = Flask(__name__)
+        self.db = Database()
 
         @self.app.route('/', methods=["GET"])
         def requestQuery():
@@ -15,29 +21,17 @@ class FlaskApp:
             if request.method == "POST":
                 query = request.form["queryText"]
                 print("Query:", query)
-                if self.checkValidQuery(query):
-                    #Currently hardcoded till linked to db
+                if self.db.checkValidQuery(query):
+                    qep = self.db.query(query)
+                    self.db.generateQueryPlan(qep["Plan"])
                     render_args = {
                         "query": query,
-                        "annotations": [["SELECT * FROM table"," The Cost is 12345"], ["WHERE a = b","The Cost is 1234"]],
-                        "total_cost": 100,
-                        "total_plan_rows": 100,
-                        "total_seq_scan": 100,
-                        "total_index_scan": 100
+                        "annotations": self.db.queryPlanList,
+                        "total_cost": qep["Plan"]["Total Cost"],
+                        "total_plan_rows": qep["Plan"]["Plan Rows"]
                     }
                     return render_template("queryplan.html", **render_args)
             return redirect('/')
            
     def run(self):
         self.app.run()
-    
-    def checkValidQuery(self, query):
-        if len(query) == 0:
-            return False
-        else:     
-        # self.cursor.execute(query)
-        # try:
-        #     self.cursor.fetchone()
-        # except:
-        #     return False
-            return True
