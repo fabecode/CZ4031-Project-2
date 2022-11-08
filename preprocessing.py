@@ -1,7 +1,7 @@
 import psycopg2
 import configparser
 import json
-from annotation import *
+from annotation import Annotation
 
 
 class Database:
@@ -30,15 +30,76 @@ class Database:
                          "enable_seqscan",
                          "enable_sort",
                          "enable_tidscan"]
+        self.annotation = Annotation()
+        self.scanDict = {}
+        self.joinDict = {}
+        self.queryPlanList = []
 
-        self.scanHash = {}
-        self.joinHash = {}
+    def printQueryPlan(self):
+        print(self.queryPlanList)
+
+    def generateQueryPlan(self, qep):
+        """
+        Recursively generates query plan
+        :param qep: Qeury Execution Plan
+        :return: None, annotation saved in self.queryPlanDict
+        """
+        if qep == {}:
+            return
+        
+        ##################### SCAN TYPE NODES #####################
+        if "Relation Name" in qep and qep["Relation Name"] in self.scanDict:
+            output = self.annotation.compareScanAnno(qep, self.scanDict)
+            self.queryPlanList.append([qep["Relation Name"], output])
+
+        ##################### JOIN TYPE NODES #####################
+        # merge join type nodes
+        elif "Merge Cond" in qep and qep["Merge Cond"] in self.joinDict:
+            output = self.annotation.compareJoinAnno(qep, self.joinDict, qep["Merge Cond"])
+            self.queryPlanList.append([qep["Merge Cond"], output])
+
+        # hash join type nodes
+        elif "Hash Cond" in qep and qep["Hash Cond"] in self.joinDict:
+            output = self.annotation.compareJoinAnno(qep, self.joinDict, qep["Hash Cond"])
+            self.queryPlanList.append([qep["Hash Cond"], output])
+        
+        ##################### SORT TYPE NODES #####################
+        elif "Sort Key" in qep:
+            procedure = self.annotation.annoDict.get(qep["Node Type"], self.annotation.defaultAnno)
+            output = procedure(qep)
+            self.queryPlanList.append([qep["Sort Key"], output])
+
+        ################## OTHER TYPE OF NODES ###################
+        else:
+            output = self.annotation.annoDict.get(qep["Node Type"], self.annotation.defaultAnno(qep))
+            self.queryPlanList.append([qep["Node Type"], output])
+
+        ##################### RECURSIVE CALL #####################
+        if "Plans" in qep:
+            for i in qep["Plans"]:
+                self.generateQueryPlan(i)
+    
+
+    def checkValidQuery(self, query):
+        """
+        Tries to execute query and check for vaildity. Returns a single row on valid query. Else returns None
+        :param query:
+        :return:
+        """
+
+        try:
+            self.cursor.execute(query)
+            results = self.cursor.fetchone()
+            return results
+        except Exception as e:
+            return None
+
 
     def query(self, query):
         """
         Executes query and returns the qep. For debugging purpose will store to json for now.
         :param query: SQL query to execute
-        :return: QEP
+        :return: QEP, scanDict, joinDict
         """
 
         self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
@@ -48,10 +109,10 @@ class Database:
 
         self.scans(qep["Plan"])
         self.AQPwrapper(query)
-        with open(f'scanhash.json', 'w', encoding='utf-8') as f:
-            json.dump(self.scanHash, f, ensure_ascii=False, indent=4)
-        with open(f'joinhash.json', 'w', encoding='utf-8') as f:
-            json.dump(self.joinHash, f, ensure_ascii=False, indent=4)
+        with open(f'scanDict.json', 'w', encoding='utf-8') as f:
+            json.dump(self.scanDict, f, ensure_ascii=False, indent=4)
+        with open(f'joinDict.json', 'w', encoding='utf-8') as f:
+            json.dump(self.joinDict, f, ensure_ascii=False, indent=4)
         return qep
 
     def AQPwrapper(self, query):
@@ -112,40 +173,44 @@ class Database:
 
     def scans(self, qep):
         """
-        Recursively grab all the scans type nodes in a QEP/AQP which can be used for comparison later
+        Recursively grab all the scans type nodes in a QEP/AQP which can be used for queryPlanDict later
         :param qep:
-        :return: None. Results is store in scanHash dictionary
+        :return: None. Results is store in scanDict dictionary
         """
         if qep == {}:
             return
 
+        #################### SCAN TYPE NODES ####################
         # grabbing scan type nodes
-        if "Relation Name" in qep and qep["Relation Name"] in self.scanHash:
-            if qep not in self.scanHash[qep["Relation Name"]]:
-                self.scanHash[qep["Relation Name"]].append(qep)
-        elif "Relation Name" in qep and qep["Relation Name"] not in self.scanHash:
-            self.scanHash[qep["Relation Name"]] = [qep]
+        if "Relation Name" in qep and qep["Relation Name"] in self.scanDict:
+            if qep not in self.scanDict[qep["Relation Name"]]:
+                self.scanDict[qep["Relation Name"]].append(qep)
+        elif "Relation Name" in qep and qep["Relation Name"] not in self.scanDict:
+            self.scanDict[qep["Relation Name"]] = [qep]
 
+        #################### JOIN TYPE NODES ####################
         # grabbing merge join type nodes
         if "Node Type" in qep and qep["Node Type"] == "Merge Join":
             temp = qep.copy()
             temp.pop("Plans")
-            if temp["Merge Cond"] in self.joinHash:
-                if temp not in self.joinHash[temp["Merge Cond"]]:
-                    self.joinHash[temp["Merge Cond"]].append(temp)
+            if temp["Merge Cond"] in self.joinDict:
+                if temp not in self.joinDict[temp["Merge Cond"]]:
+                    self.joinDict[temp["Merge Cond"]].append(temp)
             else:
-                self.joinHash[temp["Merge Cond"]] = [temp]
+                self.joinDict[temp["Merge Cond"]] = [temp]
 
         # grabbing hash join type nodes
         if "Node Type" in qep and qep["Node Type"] == "Hash Join":
             temp = qep.copy()
             temp.pop("Plans")
-            if temp["Hash Cond"] in self.joinHash:
-                if temp not in self.joinHash[temp["Hash Cond"]]:
-                    self.joinHash[temp["Hash Cond"]].append(temp)
+            if temp["Hash Cond"] in self.joinDict:
+                if temp not in self.joinDict[temp["Hash Cond"]]:
+                    self.joinDict[temp["Hash Cond"]].append(temp)
             else:
-                self.joinHash[temp["Hash Cond"]] = [temp]
+                self.joinDict[temp["Hash Cond"]] = [temp]
 
+    
+        #################### RECURSIVE CALL ####################
         if "Plans" in qep:
             for i in qep["Plans"]:
                 self.scans(i)
@@ -157,3 +222,21 @@ class Database:
         """
         self.cursor.close()
         self.conn.close()
+
+
+# if __name__=='__main__':
+#     db = Database()
+#     query = "SELECT * FROM customer, orders WHERE customer.c_custkey = orders.o_custkey"
+#     #query = "select s_acctbal, s_name, n_name, p_partkey, p_mfgr, s_address, s_phone, s_comment from PART, SUPPLIER, PARTSUPP, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and p_size = 30 and p_type like '%STEEL' and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA' and ps_supplycost = (select min(ps_supplycost) from PARTSUPP, SUPPLIER, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA') order by s_acctbal desc, n_name, s_name, p_partkey limit 100;"
+#     #query = 123
+#     if db.checkValidQuery(query) != None:
+#         qep = db.query(query)
+#         print("qep: ", qep)
+#         print(qep["Plan"]["Plan Rows"])
+#         print(db.totalCost)
+#         print("Generating Query Plan...")
+#         db.generateQueryPlan(qep["Plan"])
+#         db.printQueryPlan()
+#     else:
+#         pass
+#     db.closeConnection()
