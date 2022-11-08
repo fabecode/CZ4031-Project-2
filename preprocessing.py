@@ -86,12 +86,12 @@ class Database:
         :param query:
         :return:
         """
-
         try:
             self.cursor.execute(query)
             results = self.cursor.fetchone()
             return results
         except Exception as e:
+            self.cursor.execute("ROLLBACK")
             return None
 
 
@@ -104,15 +104,9 @@ class Database:
 
         self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
         qep = self.cursor.fetchall()[0][0][0]
-        #with open('data.json', 'w', encoding='utf-8') as f:
-        #    json.dump(qep, f, ensure_ascii=False, indent=4)
 
         self.scans(qep["Plan"])
         self.AQPwrapper(query)
-        with open(f'scanDict.json', 'w', encoding='utf-8') as f:
-            json.dump(self.scanDict, f, ensure_ascii=False, indent=4)
-        with open(f'joinDict.json', 'w', encoding='utf-8') as f:
-            json.dump(self.joinDict, f, ensure_ascii=False, indent=4)
         return qep
 
     def AQPwrapper(self, query):
@@ -189,9 +183,12 @@ class Database:
             self.scanDict[qep["Relation Name"]] = [qep]
 
         #################### JOIN TYPE NODES ####################
+        # for join types, minus off the total cost from the left and right child.
+
         # grabbing merge join type nodes
         if "Node Type" in qep and qep["Node Type"] == "Merge Join":
             temp = qep.copy()
+            temp["Total Cost"] -= (temp["Plans"][0]["Total Cost"] + temp["Plans"][1]["Total Cost"])
             temp.pop("Plans")
             if temp["Merge Cond"] in self.joinDict:
                 if temp not in self.joinDict[temp["Merge Cond"]]:
@@ -202,6 +199,7 @@ class Database:
         # grabbing hash join type nodes
         if "Node Type" in qep and qep["Node Type"] == "Hash Join":
             temp = qep.copy()
+            temp["Total Cost"] -= (temp["Plans"][0]["Total Cost"] + temp["Plans"][1]["Total Cost"])
             temp.pop("Plans")
             if temp["Hash Cond"] in self.joinDict:
                 if temp not in self.joinDict[temp["Hash Cond"]]:
@@ -222,21 +220,3 @@ class Database:
         """
         self.cursor.close()
         self.conn.close()
-
-
-# if __name__=='__main__':
-#     db = Database()
-#     query = "SELECT * FROM customer, orders WHERE customer.c_custkey = orders.o_custkey"
-#     #query = "select s_acctbal, s_name, n_name, p_partkey, p_mfgr, s_address, s_phone, s_comment from PART, SUPPLIER, PARTSUPP, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and p_size = 30 and p_type like '%STEEL' and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA' and ps_supplycost = (select min(ps_supplycost) from PARTSUPP, SUPPLIER, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA') order by s_acctbal desc, n_name, s_name, p_partkey limit 100;"
-#     #query = 123
-#     if db.checkValidQuery(query) != None:
-#         qep = db.query(query)
-#         print("qep: ", qep)
-#         print(qep["Plan"]["Plan Rows"])
-#         print(db.totalCost)
-#         print("Generating Query Plan...")
-#         db.generateQueryPlan(qep["Plan"])
-#         db.printQueryPlan()
-#     else:
-#         pass
-#     db.closeConnection()
