@@ -71,7 +71,8 @@ class Database:
 
         ################## OTHER TYPE OF NODES ###################
         else:
-            output = self.annotation.annoDict.get(qep["Node Type"], self.annotation.defaultAnno(qep))
+            procedure = self.annotation.annoDict.get(qep["Node Type"], self.annotation.defaultAnno)
+            output = procedure(qep)
             self.queryPlanList.append([qep["Node Type"], output])
 
         ##################### RECURSIVE CALL #####################
@@ -86,12 +87,12 @@ class Database:
         :param query:
         :return:
         """
-
         try:
             self.cursor.execute(query)
             results = self.cursor.fetchone()
             return results
         except Exception as e:
+            self.cursor.execute("ROLLBACK")
             return None
 
 
@@ -104,15 +105,9 @@ class Database:
 
         self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
         qep = self.cursor.fetchall()[0][0][0]
-        #with open('data.json', 'w', encoding='utf-8') as f:
-        #    json.dump(qep, f, ensure_ascii=False, indent=4)
 
-        self.scans(qep["Plan"])
+        self.processPlans(qep["Plan"])
         self.AQPwrapper(query)
-        with open(f'scanDict.json', 'w', encoding='utf-8') as f:
-            json.dump(self.scanDict, f, ensure_ascii=False, indent=4)
-        with open(f'joinDict.json', 'w', encoding='utf-8') as f:
-            json.dump(self.joinDict, f, ensure_ascii=False, indent=4)
         return qep
 
     def AQPwrapper(self, query):
@@ -148,6 +143,7 @@ class Database:
                 temp.add(t)
                 output.append(aqp)
 
+        # restore to default (all ON)
         setQuery = f"SET enable_bitmapscan=ON; " \
                    f"SET enable_hashagg=ON; " \
                    f"SET enable_hashjoin=ON; " \
@@ -160,9 +156,8 @@ class Database:
                    f"SET enable_sort=ON; " \
                    f"SET enable_tidscan=ON;"
         self.cursor.execute(setQuery)
-        print(len(temp))
         for i in output:
-            self.scans(i["Plan"])
+            self.processPlans(i["Plan"])
 
     def aqp(self, query, setQuery):
         self.cursor.execute(setQuery)
@@ -171,7 +166,7 @@ class Database:
         aqp = self.cursor.fetchall()[0][0][0]
         return aqp
 
-    def scans(self, qep):
+    def processPlans(self, qep):
         """
         Recursively grab all the scans type nodes in a QEP/AQP which can be used for queryPlanDict later
         :param qep:
@@ -189,9 +184,12 @@ class Database:
             self.scanDict[qep["Relation Name"]] = [qep]
 
         #################### JOIN TYPE NODES ####################
+        # for join types, minus off the total cost from the left and right child.
+
         # grabbing merge join type nodes
         if "Node Type" in qep and qep["Node Type"] == "Merge Join":
             temp = qep.copy()
+            temp["Total Cost"] -= (temp["Plans"][0]["Total Cost"] + temp["Plans"][1]["Total Cost"])
             temp.pop("Plans")
             if temp["Merge Cond"] in self.joinDict:
                 if temp not in self.joinDict[temp["Merge Cond"]]:
@@ -202,6 +200,7 @@ class Database:
         # grabbing hash join type nodes
         if "Node Type" in qep and qep["Node Type"] == "Hash Join":
             temp = qep.copy()
+            temp["Total Cost"] -= (temp["Plans"][0]["Total Cost"] + temp["Plans"][1]["Total Cost"])
             temp.pop("Plans")
             if temp["Hash Cond"] in self.joinDict:
                 if temp not in self.joinDict[temp["Hash Cond"]]:
@@ -213,7 +212,7 @@ class Database:
         #################### RECURSIVE CALL ####################
         if "Plans" in qep:
             for i in qep["Plans"]:
-                self.scans(i)
+                self.processPlans(i)
 
     def closeConnection(self):
         """
@@ -222,21 +221,3 @@ class Database:
         """
         self.cursor.close()
         self.conn.close()
-
-
-# if __name__=='__main__':
-#     db = Database()
-#     query = "SELECT * FROM customer, orders WHERE customer.c_custkey = orders.o_custkey"
-#     #query = "select s_acctbal, s_name, n_name, p_partkey, p_mfgr, s_address, s_phone, s_comment from PART, SUPPLIER, PARTSUPP, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and p_size = 30 and p_type like '%STEEL' and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA' and ps_supplycost = (select min(ps_supplycost) from PARTSUPP, SUPPLIER, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA') order by s_acctbal desc, n_name, s_name, p_partkey limit 100;"
-#     #query = 123
-#     if db.checkValidQuery(query) != None:
-#         qep = db.query(query)
-#         print("qep: ", qep)
-#         print(qep["Plan"]["Plan Rows"])
-#         print(db.totalCost)
-#         print("Generating Query Plan...")
-#         db.generateQueryPlan(qep["Plan"])
-#         db.printQueryPlan()
-#     else:
-#         pass
-#     db.closeConnection()

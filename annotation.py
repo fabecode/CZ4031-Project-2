@@ -93,13 +93,14 @@ class Annotation:
                 seen[j["Node Type"]] = j["Total Cost"]
             elif j["Node Type"] in seen and seen[j["Node Type"]] > j["Total Cost"]:
                 seen[j["Node Type"]] = j["Total Cost"]
-        seen[qep["Node Type"]] = qep["Total Cost"]
+        seen[qep["Node Type"]] = qep["Total Cost"] - qep["Plans"][0]["Total Cost"] - qep["Plans"][1]["Total Cost"]
 
+        joinCost = qep['Total Cost'] - qep["Plans"][0]["Total Cost"] - qep["Plans"][1]["Total Cost"]
         result = ""
-        result += f"{qep['Node Type']} done on {joinCond} with a cost of {qep['Total Cost']}. "
+        result += f"{qep['Node Type']} done on {joinCond} with a cost of {joinCost:.3f}. "
         for key, value in seen.items():
             if key != qep["Node Type"]:
-                result += f"{qep['Node Type']} is chosen as choosing {key} costs {(value/seen[qep['Node Type']]):.3f} times more with a cost of {value}. "
+                result += f"{qep['Node Type']} is chosen as choosing {key} costs {(value/seen[qep['Node Type']]):.3f} times more with a cost of {value:.3f}. "
         
         if qep["Node Type"] == "Hash Join":
             result += self.hashjoinAnno(qep)

@@ -30,6 +30,10 @@ class FlaskApp:
                         "total_cost": qep["Plan"]["Total Cost"],
                         "total_plan_rows": qep["Plan"]["Plan Rows"]
                     }
+                    # restore to default
+                    self.db.queryPlanList = []
+                    self.scanDict = {}
+                    self.joinDict = {}
                     return render_template("queryplan.html", **render_args)
             return redirect('/')
            
