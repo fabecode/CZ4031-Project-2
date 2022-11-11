@@ -71,7 +71,8 @@ class Database:
 
         ################## OTHER TYPE OF NODES ###################
         else:
-            output = self.annotation.annoDict.get(qep["Node Type"], self.annotation.defaultAnno(qep))
+            procedure = self.annotation.annoDict.get(qep["Node Type"], self.annotation.defaultAnno)
+            output = procedure(qep)
             self.queryPlanList.append([qep["Node Type"], output])
 
         ##################### RECURSIVE CALL #####################
@@ -105,7 +106,7 @@ class Database:
         self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
         qep = self.cursor.fetchall()[0][0][0]
 
-        self.scans(qep["Plan"])
+        self.processPlans(qep["Plan"])
         self.AQPwrapper(query)
         return qep
 
@@ -142,6 +143,7 @@ class Database:
                 temp.add(t)
                 output.append(aqp)
 
+        # restore to default (all ON)
         setQuery = f"SET enable_bitmapscan=ON; " \
                    f"SET enable_hashagg=ON; " \
                    f"SET enable_hashjoin=ON; " \
@@ -154,9 +156,8 @@ class Database:
                    f"SET enable_sort=ON; " \
                    f"SET enable_tidscan=ON;"
         self.cursor.execute(setQuery)
-        print(len(temp))
         for i in output:
-            self.scans(i["Plan"])
+            self.processPlans(i["Plan"])
 
     def aqp(self, query, setQuery):
         self.cursor.execute(setQuery)
@@ -165,7 +166,7 @@ class Database:
         aqp = self.cursor.fetchall()[0][0][0]
         return aqp
 
-    def scans(self, qep):
+    def processPlans(self, qep):
         """
         Recursively grab all the scans type nodes in a QEP/AQP which can be used for queryPlanDict later
         :param qep:
@@ -211,7 +212,7 @@ class Database:
         #################### RECURSIVE CALL ####################
         if "Plans" in qep:
             for i in qep["Plans"]:
-                self.scans(i)
+                self.processPlans(i)
 
     def closeConnection(self):
         """
