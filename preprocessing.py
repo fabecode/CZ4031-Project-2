@@ -87,6 +87,7 @@ class Database:
         :param query:
         :return:
         """
+
         try:
             self.cursor.execute(query)
             results = self.cursor.fetchone()
@@ -105,6 +106,9 @@ class Database:
 
         self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
         qep = self.cursor.fetchall()[0][0][0]
+
+        with open('data.json', 'w', encoding='utf-8') as f:
+            json.dump(qep, f, ensure_ascii=False, indent=4)
 
         self.processPlans(qep["Plan"])
         self.AQPwrapper(query)

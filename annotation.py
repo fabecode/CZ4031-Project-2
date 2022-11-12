@@ -43,6 +43,10 @@ class Annotation:
         "Seq Scan": self.seqscanAnno,
         "Sort": self.sortAnno,
         "Tid Scan": self.tidAnno,
+        "Gather Merge": self.gathermergeAnno,
+        "Gather": self.gatherAnno,
+        "Limit": self.limitAnno,
+        "Aggregate": self.aggregateAnno
         }
 
     ########################### HIGH LEVEL ANNOTATIONS ############################
@@ -64,10 +68,10 @@ class Annotation:
         seen[qep["Node Type"]] = qep["Total Cost"]
 
         result = ""
-        result += f"{qep['Node Type']} done on {qep['Relation Name']} with a cost of {qep['Total Cost']}. "
+        result += f"{italic(qep['Node Type'])} done on {green(qep['Relation Name'])} with a cost of {qep['Total Cost']}. "
         for key, value in seen.items():
             if key != qep["Node Type"]:
-                result += f"{qep['Node Type']} is chosen as choosing {key} costs {(value/seen[qep['Node Type']]):.3f} times more with a cost of {value}. "
+                result += f"{italic(qep['Node Type'])} is chosen as choosing {italic(key)} costs {(value/seen[qep['Node Type']]):.3f} times more with a cost of {value}. "
         if qep["Node Type"] == "Index Scan":
             result += self.indexAnno(qep)
         elif qep["Node Type"] == "Index Only Scan":
@@ -97,10 +101,10 @@ class Annotation:
 
         joinCost = qep['Total Cost'] - qep["Plans"][0]["Total Cost"] - qep["Plans"][1]["Total Cost"]
         result = ""
-        result += f"{qep['Node Type']} done on {joinCond} with a cost of {joinCost:.3f}. "
+        result += f"{italic(qep['Node Type'])} done on {bold(joinCond)} with a cost of {joinCost:.3f}. "
         for key, value in seen.items():
             if key != qep["Node Type"]:
-                result += f"{qep['Node Type']} is chosen as choosing {key} costs {(value/seen[qep['Node Type']]):.3f} times more with a cost of {value:.3f}. "
+                result += f"{italic(qep['Node Type'])} is chosen as choosing {italic(key)} costs {(value/seen[qep['Node Type']]):.3f} times more with a cost of {value:.3f}. "
         
         if qep["Node Type"] == "Hash Join":
             result += self.hashjoinAnno(qep)
@@ -241,3 +245,28 @@ class Annotation:
         result = ""
         return result
 
+    def gathermergeAnno(self, qep):
+
+        result = f"The {italic(qep['Node Type'])} operation indicates that each process executing the parallel portion of the plan is producing tuples in sorted order, and the leader is performing an order-preserving merge."
+
+        return result
+
+    def gatherAnno(self, qep):
+
+        result = f"The {italic(qep['Node Type'])} operation reads tuples from the background workers processes in whatever order is convenient, destroying any sort order that may have existed."
+
+        return result
+
+    def limitAnno(self, qep):
+
+        result = f"With the {italic(qep['Node Type'])} operation, the DBMS takes only {bold(str(qep['Plan Rows']))} records and disregards the rest."
+
+        return result
+
+    def aggregateAnno(self, qep):
+        result = f"The {italic(qep['Node Type'])} operation is used to perform aggregate operations on single results from multiple input rows. For example: SUM, COUNT, AVG, MAX, MIN etc. "
+
+        if "Group Key" in qep:
+            result += f"The group key is {bold(str(qep['Group Key']))}."
+
+        return result
