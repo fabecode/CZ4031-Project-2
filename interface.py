@@ -112,8 +112,10 @@ class QueryPlan:
         node_type = query['Node Type']
         if node_type in ["Bitmap Heap Scan", "Index Scan", "Index Only Scan","Seq Scan"]:
             return Node(node_type,query["Total Cost"],"table: "+query["Relation Name"])
-        elif node_type in ["Hash Join","Merge Join"]:
+        elif node_type == "Hash Join":
             return Node(node_type,query["Total Cost"],query["Hash Cond"])
+        elif node_type == "Merge Join":
+            return Node(node_type,query["Total Cost"],query["Merge Cond"])
         else:
             return Node(query["Node Type"],query["Total Cost"])
     
@@ -199,14 +201,15 @@ class QueryPlan:
         file_name = os.path.join(os.getcwd(), "static", graph_name)
         plot_formatter_position = get_tree_node_pos(self.graph, self.root)
         node_labels = {x: str(x) for x in self.graph.nodes}
-        the_base_size = 100
+        # the_base_size = 100
+        # [len(v.__str__()) * the_base_size for v in self.graph.nodes()]
         nx.draw(
             self.graph,
             plot_formatter_position,
             with_labels=True,
             labels=node_labels,
             font_size=6,
-            node_size=[len(v.__str__()) * the_base_size for v in self.graph.nodes()],
+            node_size=2000,
             node_color="#E2FAB5",
             node_shape="s",
             alpha=1,
