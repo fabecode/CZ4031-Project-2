@@ -28,39 +28,43 @@ class FlaskApp:
             if request.method == "POST":
                 query = request.form["queryText"]
                 if self.db.checkValidQuery(query):
-                    qep = self.db.query(query)
-                    self.db.generateQueryPlan(qep["Plan"])
+                    try:
+                        qep = self.db.query(query)
+                        self.db.generateQueryPlan(qep["Plan"])
 
-                    # Generate graph for qep and aqp
-                    qepgraph = QueryPlan(qep["Plan"])
-                    graphfile = qepgraph.save_graph_file()
+                        # Generate graph for qep and aqp
+                        qepgraph = QueryPlan(qep["Plan"])
+                        graphfile = qepgraph.save_graph_file()
 
-                    aqpgraphfiles = []
-                    prev_val = 0
-                    all_aqp = [ aqp['Plan'] for aqp in self.db.altQueryPlans]
-                    sorted_aqp = sorted(all_aqp, key = lambda x:x['Total Cost'])
-                    for _ in range(3):
-                        while sorted_aqp[-1]["Total Cost"] == prev_val:
-                            sorted_aqp.pop()
-                        prev_val = sorted_aqp[-1]["Total Cost"]
-                        temp = QueryPlan(sorted_aqp.pop())
-                        aqpgraphfiles.append(temp.save_graph_file())
+                        aqpgraphfiles = []
+                        prev_val = 0
+                        all_aqp = [ aqp['Plan'] for aqp in self.db.altQueryPlans]
+                        sorted_aqp = sorted(all_aqp, key = lambda x:x['Total Cost'])
+                        for _ in range(3):
+                            while sorted_aqp[-1]["Total Cost"] == prev_val:
+                                sorted_aqp.pop()
+                            prev_val = sorted_aqp[-1]["Total Cost"]
+                            temp = QueryPlan(sorted_aqp.pop())
+                            aqpgraphfiles.append(temp.save_graph_file())
 
 
-                    render_args = {
-                        "query": sqlparse.format(query, reindent=True, keyword_case='upper'),
-                        "annotations": self.db.queryPlanList,
-                        "total_cost": qep["Plan"]["Total Cost"],
-                        "total_operations": qepgraph.get_num_nodes(),
-                        "qep_graph": graphfile,
-                        "aqp_graph": aqpgraphfiles
-                    }
-                    # restore to default
-                    self.db.queryPlanList = []
-                    self.db.altQueryPlans = []
-                    self.db.scanDict = {}
-                    self.db.joinDict = {}
-                    return render_template("queryplan.html", **render_args)
+                        render_args = {
+                            "query": sqlparse.format(query, reindent=True, keyword_case='upper'),
+                            "annotations": self.db.queryPlanList,
+                            "total_cost": qep["Plan"]["Total Cost"],
+                            "total_operations": qepgraph.get_num_nodes(),
+                            "qep_graph": graphfile,
+                            "aqp_graph": aqpgraphfiles
+                        }
+                        # restore to default
+                        self.db.queryPlanList = []
+                        self.db.altQueryPlans = []
+                        self.db.scanDict = {}
+                        self.db.joinDict = {}
+                        return render_template("queryplan.html", **render_args)
+                    except Exception as e:
+                        print("Exception:", e)
+                        return redirect('/')
             return redirect('/')
            
     def run(self):
