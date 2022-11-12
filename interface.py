@@ -20,7 +20,7 @@ class FlaskApp:
         @self.app.route('/', methods=["GET"])
         def requestQuery():
             #Currently hardcoded till linked to db
-            db_schemas = ['TBC-H', 'Others']
+            db_schemas = self.db.retrieveAllDbs()
             return render_template('home.html', db_schemas = db_schemas)
 
         @self.app.route("/queryplan", methods=["POST", "GET"])
@@ -37,7 +37,7 @@ class FlaskApp:
                         "query": sqlparse.format(query, reindent=True, keyword_case='upper'),
                         "annotations": self.db.queryPlanList,
                         "total_cost": qep["Plan"]["Total Cost"],
-                        "total_plan_rows": qep["Plan"]["Plan Rows"],
+                        "total_operations": qp.get_num_nodes(),
                         "qep_graph": graphfile
                     }
                     # restore to default
@@ -189,6 +189,12 @@ class QueryPlan:
         plt.clf()
         return graph_name
 
+    def get_num_nodes(self) -> int:
+        """Returns the number of nodes in the graph.
+        Returns:
+            int: Number of nodes
+        """     
+        return len(self.graph.nodes)
 
 def get_tree_node_pos(G, root=None, width=1.0, height=1, vert_gap=0.2, vert_loc=0, xcenter=0.5):
     """From Joel's answer at https://stackoverflow.com/a/29597209/2966723.
@@ -267,9 +273,3 @@ def get_tree_node_pos(G, root=None, width=1.0, height=1, vert_gap=0.2, vert_loc=
             return pos
         return h_recur(G, root, width=width, vert_gap = 0.2, vert_loc = vert_loc, xcenter = xcenter)
     return _hierarchy_pos(G, root, width, vert_gap, vert_loc, xcenter)
-# if __name__=='__main__':
-#     db = Database()
-#     qep = db.query("select s_acctbal, s_name, n_name, p_partkey, p_mfgr, s_address, s_phone, s_comment from PART, SUPPLIER, PARTSUPP, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and p_size = 30 and p_type like '%STEEL' and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA' and ps_supplycost = (select min(ps_supplycost) from PARTSUPP, SUPPLIER, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA') order by s_acctbal desc, n_name, s_name, p_partkey limit 100;")
-    
-#     qp = QueryPlan(qep["Plan"])
-#     qp.save_graph_file()

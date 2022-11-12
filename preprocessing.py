@@ -50,7 +50,7 @@ class Database:
         ##################### SCAN TYPE NODES #####################
         if "Relation Name" in qep and qep["Relation Name"] in self.scanDict:
             output = self.annotation.compareScanAnno(qep, self.scanDict)
-            self.queryPlanList.append([qep["Relation Name"], output])
+            self.queryPlanList.append([qep["Relation Name"].upper() + " table", output])
 
         ##################### JOIN TYPE NODES #####################
         # merge join type nodes
@@ -218,6 +218,15 @@ class Database:
             for i in qep["Plans"]:
                 self.processPlans(i)
 
+    def retrieveAllDbs(self):
+        self.cursor.execute("SELECT datname FROM pg_database")
+        dbs = self.cursor.fetchall()
+        db_list = []
+        for db in dbs:
+            db_list.append(db[0])
+
+        return db_list
+        
     def closeConnection(self):
         """
         Close connection to database

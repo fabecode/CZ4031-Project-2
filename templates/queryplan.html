@@ -9,15 +9,16 @@
       {% else %}
       <span>Submit your query above to begin</span>
       {% endif %}
-      <h3>Key Metrics</h3>
+      <h3>QEP Key Metrics</h3>
       <table>
         <tr>
           <th>Total Cost</th>
           <td>{{total_cost}}</td>
         </tr>
         <tr>
-          <th>Total Plan Rows</th>
-          <td>{{total_plan_rows}}</td>
+          <th>Total Number of Operations</th>
+          <td>{{total_operations}}</td>
+        </tr>
       </table>
       <h3 class="mt-3">Optimal QEP - Annotations</h3>
      {% if annotations %}
