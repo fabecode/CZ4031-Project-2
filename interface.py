@@ -10,6 +10,7 @@ import time
 from annotation import *
 import sqlparse
 import math
+import traceback
 
 ##################################### Flask App #####################################
 class FlaskApp:
@@ -43,11 +44,12 @@ class FlaskApp:
                         all_aqp = [ aqp['Plan'] for aqp in self.db.altQueryPlans]
                         sorted_aqp = sorted(all_aqp, key = lambda x:x['Total Cost'])
                         for _ in range(3):
-                            while sorted_aqp[-1]["Total Cost"] == prev_val and len(sorted_aqp) > 1:
+                            while len(sorted_aqp) > 1 and sorted_aqp[-1]["Total Cost"] == prev_val:
                                 sorted_aqp.pop()
-                            prev_val = sorted_aqp[-1]["Total Cost"]
-                            temp = QueryPlan(sorted_aqp.pop())
-                            aqpgraphfiles.append(temp.save_graph_file())
+                            if sorted_aqp and sorted_aqp[-1]["Total Cost"] != qep["Plan"]["Total Cost"]:
+                                prev_val = sorted_aqp[-1]["Total Cost"]
+                                temp = QueryPlan(sorted_aqp.pop())
+                                aqpgraphfiles.append(temp.save_graph_file())
 
 
                         render_args = {
@@ -65,7 +67,7 @@ class FlaskApp:
                         self.db.joinDict = {}
                         return render_template("queryplan.html", **render_args)
                     except Exception as e:
-                        print("Exception:", e)
+                        print(traceback.format_exc())
                         return redirect('/')
             return redirect('/')
            
