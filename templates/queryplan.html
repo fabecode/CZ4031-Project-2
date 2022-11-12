@@ -1,8 +1,7 @@
-{% extends "base.html" %} {% block title %} Query Plan {% endblock %} {% block content
-    %}
+{% extends "base.html" %} {% block title %} Query Plan {% endblock %} {% block content%}
 <div class="container-form">
   <div class="wrap-form">
-    <h1 class="form-title"><center>Optimised Query</center></h1>
+    <h1><center>Optimised Query</center></h1>
     <div>
       <h3>Submitted Query</h3>
       {% if query %}
@@ -17,35 +16,26 @@
           <td>{{total_cost}}</td>
         </tr>
         <tr>
-          <th>Number of index scans</th>
-          <td>{{total_index_scan}}</td>
-        </tr>
-        <tr>
-          <th>Number of sequential scans</th>
-          <td>{{total_seq_scan}}</td>
-        </tr>
-        <tr>
-          <th>Number of rows</th>
+          <th>Total Plan Rows</th>
           <td>{{total_plan_rows}}</td>
-        </tr>
       </table>
       <h3 class="mt-3">Optimal QEP - Annotations</h3>
      {% if annotations %}
-      <ol>
-        {% for annotation in annotations %}
-        <li>
-          <div class="tooltipright">
-            {{annotation[0]}}
-            <span class="toolttext">{{annotation[1]}}</span>
-          </div>
-        </li>
-        {% endfor %}
-      </ol>
+      <table>
+      <th>Query Line</th>
+      <th>Annotation</th>
+      {% for annotation in annotations %}
+      <tr class="queryHighlight" onmouseover="onMouse(this)" onmouseout="offMouse(this)">
+        <td>{{annotation[0] | safe}}}</td>
+        <td>{{annotation[1] | safe}}</td>
+      </tr>
+      {% endfor %}
+     </table>
+
       {% else %}
       <span>Insert query to begin</span>
-      {% endif %} 
+      {% endif %}
       <h3 class="mt-3">Optimal QEP - Visualization</h3>
-      <h3 class="mt-3">Alternative Query Plans - Annotations</h3>
     </div>
     <div class="text-center">
       <a href="/">
@@ -58,5 +48,5 @@
     </div>
   </div>
 </div>
-    
+
 {% endblock %}

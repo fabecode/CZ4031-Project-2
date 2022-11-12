@@ -61,7 +61,7 @@ body {
     background: -moz-linear-gradient(45deg,#00dbde,#fc00ff);
     background: linear-gradient(45deg,#00dbde,#fc00ff); */
 .wrap-form {
-  width: 50%;
+  width: 75%;
   background: #fff;
   border-radius: 10px;
   overflow: hidden;
@@ -129,17 +129,17 @@ textarea {
   visibility: hidden;
   width: max-content;
   height:max-content;
-  background-color:lightsalmon;
+  background-color:rgb(111, 179, 247);
   color: black;
   text-align: center;
   border-radius: 4px;
-  padding: 6px ;
+  padding: 4px ;
   /* Position the tooltip */
   position: absolute;
   z-index: 0;
-  left: 120%;
+  left: 150%;
   }
-.tooltipright:hover .toolttext {
+.tooltipright .toolttext {
   visibility: visible;
   }
   /*left position*/
@@ -152,7 +152,7 @@ textarea {
   visibility: hidden;
   width: 200px;
   height:50px;
-  background-color:lightsalmon;
+  background-color:rgb(111, 179, 247);
   color: black;
   text-align: center;
   border-radius: 4px;
