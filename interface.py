@@ -10,6 +10,7 @@ import time
 from annotation import *
 import sqlparse
 import math
+from threading import Thread
 
 ##################################### Flask App #####################################
 class FlaskApp:
@@ -29,7 +30,6 @@ class FlaskApp:
                 self.db.resetState()
                 query = request.form["queryText"]
                 if self.db.checkValidQuery(query):
-                    print(request.form)
                     try:
                         qep = self.db.query(query)
                         self.db.generateQueryPlan(qep["Plan"])
