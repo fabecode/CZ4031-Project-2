@@ -16,8 +16,15 @@ class Database:
             database=self.config['postgresql']['database'],
             user=self.config['postgresql']['user'],
             password=self.config['postgresql']['password'],
-            port=self.config['postgresql']['port']
+            port=self.config['postgresql']['port'],
+            connect_timeout=3,
+            keepalives=1,
+            keepalives_idle=5,
+            keepalives_interval=2,
+            keepalives_count=2,
+            options='-c statement_timeout=6000'
         )
+        self.conn.set_isolation_level(0)
         self.db_name = self.config['postgresql']['database']
         self.cursor = self.conn.cursor()
         self.possible = ["enable_bitmapscan",

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, flash
 from preprocessing import Database
 import networkx as nx
 import matplotlib
@@ -16,6 +16,7 @@ import traceback
 class FlaskApp:
     def __init__(self):
         self.app = Flask(__name__)
+        self.app.secret_key = b'secret key for 4031'
         self.db = Database()
 
         @self.app.route('/', methods=["GET"])
@@ -68,6 +69,9 @@ class FlaskApp:
                     except Exception as e:
                         print(traceback.format_exc())
                         return redirect('/')
+                else: 
+                    flash('Invalid SQL Query or Query Timeout!', 'error')
+                    return redirect('/')
             return redirect('/')
            
     def run(self):

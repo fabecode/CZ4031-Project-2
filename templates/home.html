@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %} Request Query {% endblock %} 
-{% block content %}
+{% extends "base.html" %} {% block title %} Request Query {% endblock %} {% block content %}
 <div class="container-form">
   <div class="wrap-form">
     <h1 class="form-title"><center>Query Optimiser</center></h1>
@@ -13,6 +12,18 @@
             {% endfor %}
           </select>
         </div>
+        {% with errors = get_flashed_messages(category_filter=["error"]) %}
+        {% if errors %}
+        <div class="alert alert-danger alert-dismissible fade show"
+             role="alert">
+            <ul>
+                {%- for msg in errors %}
+                <li>{{ msg }}</li>
+                {% endfor -%}
+            </ul>
+        </div>
+        {% endif %}
+        {% endwith %}
         <div>
           <form method="POST" action="/queryplan">
             <h3>Input SQL Query for evaluation and optimisation</h3>
