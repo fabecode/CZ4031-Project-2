@@ -104,7 +104,9 @@ class Annotation:
         result += f"{blueItalicBold(qep['Node Type'])} is done on {bold(joinCond)} with a cost of {bold(str(joinCost))}. "
         for key, value in seen.items():
             if key != qep["Node Type"]:
-                result += f"{blueItalicBold(qep['Node Type'])} is chosen as it is more efficient than {italic(key)}, which costs {value/seen[qep['Node Type']]:.3f} times more with a cost of {value:.3f} in the AQP. "
+                ratio = value/joinCost
+                if ratio >= 1:
+                    result += f"{blueItalicBold(qep['Node Type'])} is chosen as it is more efficient than {italic(key)}, which costs {value/joinCost:.3f} times more with a cost of {value:.3f} in the AQP. "
         
         if qep["Node Type"] == "Hash Join":
             result += self.hashjoinAnno(qep)

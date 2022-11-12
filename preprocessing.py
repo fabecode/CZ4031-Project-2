@@ -89,7 +89,6 @@ class Database:
         :param query:
         :return:
         """
-
         try:
             self.cursor.execute(query)
             results = self.cursor.fetchone()
