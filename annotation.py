@@ -237,9 +237,11 @@ class Annotation:
 
         # Else specify the attribute
         else:
-            result += f"based on {bold(str(qep['Sort Key']))} with a cost of {bold(str(qep['Total Cost']))}"
-
-        result += "."
+            result += f"based on {bold(str(qep['Sort Key']))}"
+        
+        qep_total_cost = qep["Total Cost"] - qep["Plans"][0]["Total Cost"]
+        qep_total_cost = round(qep_total_cost, 3)
+        result += f" with a cost of {bold(str(qep_total_cost))}."
 
         return result
 
