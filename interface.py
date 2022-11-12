@@ -10,7 +10,6 @@ import time
 from annotation import *
 import sqlparse
 import math
-from threading import Thread
 
 ##################################### Flask App #####################################
 class FlaskApp:
