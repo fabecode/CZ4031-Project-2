@@ -144,10 +144,10 @@ class Database:
                        f"SET enable_tidscan={encode[bitstring&1]};"
 
             aqp = self.aqp(query, setQuery)
-            if bitstring <= 6:
-                self.altQueryPlans.append(aqp)
             t = json.dumps(aqp)
             if t not in temp:
+                if bitstring <= 6:
+                    self.altQueryPlans.append(aqp)
                 temp.add(t)
                 output.append(aqp)
 
@@ -164,6 +164,7 @@ class Database:
                    f"SET enable_sort=ON; " \
                    f"SET enable_tidscan=ON;"
         self.cursor.execute(setQuery)
+        print(len(output))
         for i in output:
             self.processPlans(i["Plan"])
 

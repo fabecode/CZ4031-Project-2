@@ -57,6 +57,7 @@ class FlaskApp:
                     }
                     # restore to default
                     self.db.queryPlanList = []
+                    self.db.altQueryPlans = []
                     self.db.scanDict = {}
                     self.db.joinDict = {}
                     return render_template("queryplan.html", **render_args)
