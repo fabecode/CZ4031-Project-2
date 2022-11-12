@@ -7,3 +7,4 @@ MarkupSafe==2.1.1
 networkx==2.8.8
 psycopg2-binary==2.9.5
 Werkzeug==2.2.2
+sqlparse==0.4.3

@@ -1,11 +1,14 @@
 from flask import Flask, render_template, redirect, request
 from preprocessing import Database
 import networkx as nx
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import random
 import os
 import time
 from annotation import *
+import sqlparse
 
 ##################################### Flask App #####################################
 class FlaskApp:
@@ -27,11 +30,15 @@ class FlaskApp:
                 if self.db.checkValidQuery(query):
                     qep = self.db.query(query)
                     self.db.generateQueryPlan(qep["Plan"])
+                    
+                    qp = QueryPlan(qep["Plan"])
+                    graphfile = qp.save_graph_file()
                     render_args = {
-                        "query": query,
+                        "query": sqlparse.format(query, reindent=True, keyword_case='upper'),
                         "annotations": self.db.queryPlanList,
                         "total_cost": qep["Plan"]["Total Cost"],
-                        "total_plan_rows": qep["Plan"]["Plan Rows"]
+                        "total_plan_rows": qep["Plan"]["Plan Rows"],
+                        "qep_graph": graphfile
                     }
                     # restore to default
                     self.db.queryPlanList = []
@@ -80,11 +87,64 @@ class QueryPlan:
         """
         self.graph = nx.DiGraph()
         self.root = Node(query["Node Type"],query["Total Cost"])
-        self.construct_graph(self.root,query)
-        self.num_seq_scan_nodes = self.calculate_num_nodes("Seq Scan")
-        self.num_index_scan_nodes = self.calculate_num_nodes("Index Scan")
+        self.create_graph_node(self.root,query)
+        self.tree_depth = self.calculate_graph_depth(query)
+        self.tree_width = self.calculate_graph_width(query)
+    
+    def calculate_graph_depth(self, query):
+        """Compute the depth of QEP plan.
 
-    def construct_graph(self, root,query):
+        Args:
+            query (dict): The query plan.
+        """
+        res = 0
+
+        def helper(query):
+            nonlocal res
+            currdep = []
+
+            if "Plans" in query:
+                for child in query['Plans']:
+                    currdep.append(helper(child))
+                res = max(res,max(currdep))
+            else:
+                return 1
+            
+            return 1 + max(currdep)
+        
+        return helper(query)
+    
+    def calculate_graph_width(self,query):
+        """Compute the graph width.
+
+        Args:
+            query (dict): Query plan.
+        """
+        if 'Plans' not in query:
+            return 0
+        q = []
+        maxWidth = 0
+    
+        q.append(query)
+    
+        while q:
+            # Get the size of queue when the level order traversal for one level finishes
+            count = len(q)
+    
+            # Update the maximum node count value
+            maxWidth = max(count, maxWidth)
+    
+            while count:
+                count = count-1
+                temp = q.pop(0)
+                if 'Plans' in temp:
+                    for child in temp['Plans']:
+                        q.append(child)
+    
+        return maxWidth
+
+
+    def create_graph_node(self, root,query):
         """Constructs the graph recursively by forming an edge between each node
         and each of its child nodes.
 
@@ -97,33 +157,7 @@ class QueryPlan:
         for child in query["Plans"]:
             child_node = Node(child["Node Type"],child["Total Cost"])
             self.graph.add_edge(root, child_node)
-            self.construct_graph(child_node,child)
-
-    def calculate_num_nodes(self, node_type: str) -> int:
-        """Calculate the total number of nodes in the query with a specified node type.
-
-        Args:
-            node_type (str): Type of node (e.g. Seq Scan, Index Scan)
-
-        Returns:
-            int: Number of nodes with the specified node type.
-        """
-        num_nodes = 0
-        for node in self.graph.nodes:
-            if node.node_type == node_type:
-                num_nodes += 1
-        return num_nodes
-
-    def calculate_plan_rows(self) -> int:
-        """Calculate the total plan rows of the QEP via the summation of individual plan rows of each node.
-
-        Returns:
-            int: Total plan rows of QEP
-        """
-        plan_rows = 0
-        for node in self.graph.nodes:
-            plan_rows += node.plan_rows
-        return plan_rows
+            self.create_graph_node(child_node,child)
 
     def save_graph_file(self) -> str:
         """Renders the graph and save the figure as an .png file
@@ -133,17 +167,20 @@ class QueryPlan:
         Returns:
             str: File name of graph
         """
+        plt.figure(figsize=( 3*(2+2/(1+ math.exp(-self.tree_width))) , self.tree_depth * 1.5))
+        plt.axis('equal')
         graph_name = f"qep_{str(time.time())}.png"
         file_name = os.path.join(os.getcwd(), "static", graph_name)
         plot_formatter_position = get_tree_node_pos(self.graph, self.root)
         node_labels = {x: str(x) for x in self.graph.nodes}
+        the_base_size = 100
         nx.draw(
             self.graph,
             plot_formatter_position,
             with_labels=True,
             labels=node_labels,
             font_size=6,
-            node_size=2000,
+            node_size=[len(v.__str__()) * the_base_size for v in self.graph.nodes()],
             node_color="#E2FAB5",
             node_shape="s",
             alpha=1,
@@ -153,7 +190,7 @@ class QueryPlan:
         return graph_name
 
 
-def get_tree_node_pos(G, root=None, width=1.0, height=1, vert_gap=0.1, vert_loc=0, xcenter=0.5):
+def get_tree_node_pos(G, root=None, width=1.0, height=1, vert_gap=0.2, vert_loc=0, xcenter=0.5):
     """From Joel's answer at https://stackoverflow.com/a/29597209/2966723.
     Licensed under Creative Commons Attribution-Share Alike
 
@@ -197,52 +234,42 @@ def get_tree_node_pos(G, root=None, width=1.0, height=1, vert_gap=0.1, vert_loc=
         max_height = max(max_height, len(value))
     vert_gap = height / max_height
 
-    def _hierarchy_pos(
-        G,
-        root,
-        width,
-        vert_gap,
-        vert_loc,
-        xcenter,
-        pos=None,
-        parent=None,
-        min_dx=0.05,
-    ):
-        """Refer to get_tree_node_pos docstring for most arguments.
+    def _hierarchy_pos(G, root, width=1., vert_gap = 0.2, vert_loc = 0, xcenter = 0.5, min_dx=0.05 ):
+        '''If there is a cycle that is reachable from root, then result will not be a hierarchy.
 
-        Args:
-            parent (Node, optional): Parent of the current branch. (Only affects it if non-directed). Defaults to None.
+        G: the graph
+        root: the root node of current branch
+        width: horizontal space allocated for this branch - avoids overlap with other branches
+        vert_gap: gap between levels of hierarchy
+        vert_loc: vertical location of root
+        xcenter: horizontal location of root
+        '''
 
-        Returns:
-            [dict]: a dict that maps each node to its corresponding location if they have been assigned.
-        """
-
-        if pos is None:
-            pos = {root: (xcenter, vert_loc)}
-        else:
-            pos[root] = (xcenter, vert_loc)
-        children = list(G.neighbors(root))
-        if not isinstance(G, nx.DiGraph) and parent is not None:
-            children.remove(parent)
-        if len(children) != 0:
-            dx = max(min_dx, width / len(children))
-            nextx = xcenter - width / 2 - max(min_dx, dx / 2)
-            for child in children:
-                nextx += dx
-                pos = _hierarchy_pos(
-                    G,
-                    child,
-                    width=dx,
-                    vert_gap=vert_gap,
-                    vert_loc=vert_loc - vert_gap,
-                    xcenter=nextx,
-                    pos=pos,
-                    parent=root,
-                )
-        return pos
-
+        def h_recur(G, root, width=width, vert_gap = vert_gap, vert_loc = vert_loc, xcenter = xcenter, 
+                    pos = None, parent = None, parsed = [] ):
+            if(root not in parsed):
+                parsed.append(root)
+                if pos == None:
+                    pos = {root:(xcenter * 2,vert_loc)}
+                else:
+                    pos[root] = (xcenter * 2, vert_loc)
+                neighbors = list(G.neighbors(root))
+                if not isinstance(G, nx.DiGraph) and parent != None:
+                    neighbors.remove(parent)
+                if len(neighbors)!=0:
+                    dx = max(min_dx, width / len(neighbors))
+                    nextx = xcenter - width / 2 - max(min_dx, dx / 2)
+                    for neighbor in neighbors:
+                        nextx += dx
+                        pos = h_recur(G,neighbor, width = dx, vert_gap = vert_gap, 
+                                            vert_loc = vert_loc-vert_gap, xcenter=nextx, pos=pos, 
+                                            parent = root, parsed = parsed)
+            return pos
+        return h_recur(G, root, width=width, vert_gap = 0.2, vert_loc = vert_loc, xcenter = xcenter)
     return _hierarchy_pos(G, root, width, vert_gap, vert_loc, xcenter)
-# from output import query
 # if __name__=='__main__':
-#     qp = QueryPlan(query)
+#     db = Database()
+#     qep = db.query("select s_acctbal, s_name, n_name, p_partkey, p_mfgr, s_address, s_phone, s_comment from PART, SUPPLIER, PARTSUPP, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and p_size = 30 and p_type like '%STEEL' and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA' and ps_supplycost = (select min(ps_supplycost) from PARTSUPP, SUPPLIER, NATION, REGION where p_partkey = ps_partkey and s_suppkey = ps_suppkey and s_nationkey = n_nationkey and n_regionkey = r_regionkey and r_name = 'ASIA') order by s_acctbal desc, n_name, s_name, p_partkey limit 100;")
+    
+#     qp = QueryPlan(qep["Plan"])
 #     qp.save_graph_file()
