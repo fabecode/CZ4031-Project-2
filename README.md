@@ -21,5 +21,6 @@ are both **postgres** then your **database.ini** will look as follows.
 ```console
 python3 project.py
 ```
+5. By default, the project will be host on port 5000. (http://127.0.0.1:5000)
 
 For debugging purpose, QEPs will be saved to a json file for now.

@@ -38,6 +38,12 @@
       {% endif %}
       <h3 class="mt-3">Optimal QEP - Visualization</h3>
       <img class="image" src="{{ url_for('static', filename=qep_graph) }}">
+      {% if aqp_graph %}
+      <h3 class="mt-3">AQP - Visualization</h3>
+      {% for aqp in aqp_graph %}
+      <img class="image" src="{{ url_for('static', filename=aqp) }}">
+      {% endfor %}
+      {% endif %}
     </div>
     <div class="text-center">
       <a href="/">
