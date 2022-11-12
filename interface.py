@@ -26,7 +26,6 @@ class FlaskApp:
         def queryPlan():
             if request.method == "POST":
                 query = request.form["queryText"]
-                print("Query:", query)
                 if self.db.checkValidQuery(query):
                     qep = self.db.query(query)
                     self.db.generateQueryPlan(qep["Plan"])
@@ -42,8 +41,8 @@ class FlaskApp:
                     }
                     # restore to default
                     self.db.queryPlanList = []
-                    self.scanDict = {}
-                    self.joinDict = {}
+                    self.db.scanDict = {}
+                    self.db.joinDict = {}
                     return render_template("queryplan.html", **render_args)
             return redirect('/')
            
