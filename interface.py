@@ -32,6 +32,7 @@ class FlaskApp:
                     self.db.generateQueryPlan(qep["Plan"])
                     
                     qp = QueryPlan(qep["Plan"])
+                    # self.db.altQueryPlans
                     graphfile = qp.save_graph_file()
                     render_args = {
                         "query": sqlparse.format(query, reindent=True, keyword_case='upper'),

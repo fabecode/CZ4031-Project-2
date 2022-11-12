@@ -33,6 +33,7 @@ class Database:
         self.annotation = Annotation()
         self.scanDict = {}
         self.joinDict = {}
+        self.altQueryPlans = []
         self.queryPlanList = []
 
     def printQueryPlan(self):
@@ -142,6 +143,8 @@ class Database:
                        f"SET enable_tidscan={encode[bitstring&1]};"
 
             aqp = self.aqp(query, setQuery)
+            if bitstring <= 6:
+                self.altQueryPlans.append(aqp)
             t = json.dumps(aqp)
             if t not in temp:
                 temp.add(t)
