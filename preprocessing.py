@@ -148,20 +148,7 @@ class Database:
                 temp.add(t)
                 output.append(aqp)
 
-        # restore to default (all ON)
-        setQuery = f"SET enable_bitmapscan=ON; " \
-                   f"SET enable_hashagg=ON; " \
-                   f"SET enable_hashjoin=ON; " \
-                   f"SET enable_indexscan=ON; " \
-                   f"SET enable_indexonlyscan=ON; " \
-                   f"SET enable_material=ON; " \
-                   f"SET enable_mergejoin=ON; " \
-                   f"SET enable_nestloop=ON; " \
-                   f"SET enable_seqscan=ON; " \
-                   f"SET enable_sort=ON; " \
-                   f"SET enable_tidscan=ON;"
-        self.cursor.execute(setQuery)
-
+        self.resetState()
         for i in output:
             self.processPlans(i["Plan"])
 
@@ -242,3 +229,22 @@ class Database:
         """
         self.cursor.close()
         self.conn.close()
+
+    def resetState(self):
+        """
+        Resets the state of the database planner method configuration.
+        :return: None
+        """
+        # restore to default (all ON)
+        setQuery = f"SET enable_bitmapscan=ON; " \
+                   f"SET enable_hashagg=ON; " \
+                   f"SET enable_hashjoin=ON; " \
+                   f"SET enable_indexscan=ON; " \
+                   f"SET enable_indexonlyscan=ON; " \
+                   f"SET enable_material=ON; " \
+                   f"SET enable_mergejoin=ON; " \
+                   f"SET enable_nestloop=ON; " \
+                   f"SET enable_seqscan=ON; " \
+                   f"SET enable_sort=ON; " \
+                   f"SET enable_tidscan=ON;"
+        self.cursor.execute(setQuery)
