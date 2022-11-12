@@ -41,7 +41,7 @@ class FlaskApp:
                         all_aqp = [ aqp['Plan'] for aqp in self.db.altQueryPlans]
                         sorted_aqp = sorted(all_aqp, key = lambda x:x['Total Cost'])
                         for _ in range(3):
-                            while sorted_aqp[-1]["Total Cost"] == prev_val:
+                            while sorted_aqp[-1]["Total Cost"] == prev_val and len(sorted_aqp) > 1:
                                 sorted_aqp.pop()
                             prev_val = sorted_aqp[-1]["Total Cost"]
                             temp = QueryPlan(sorted_aqp.pop())
