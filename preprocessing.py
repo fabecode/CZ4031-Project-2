@@ -101,16 +101,13 @@ class Database:
 
     def query(self, query):
         """
-        Executes query and returns the qep. For debugging purpose will store to json for now.
+        Executes query and returns the qep.
         :param query: SQL query to execute
         :return: QEP, scanDict, joinDict
         """
 
         self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
         qep = self.cursor.fetchall()[0][0][0]
-
-        with open('data.json', 'w', encoding='utf-8') as f:
-            json.dump(qep, f, ensure_ascii=False, indent=4)
 
         self.processPlans(qep["Plan"])
         self.AQPwrapper(query)
@@ -119,8 +116,8 @@ class Database:
     def AQPwrapper(self, query):
         """
         Generates all possible combinations of AQPs
-        :param query:
-        :return:
+        :param query: query to be executed
+        :return: None
         """
         temp = set()
         output = list()
@@ -164,11 +161,17 @@ class Database:
                    f"SET enable_sort=ON; " \
                    f"SET enable_tidscan=ON;"
         self.cursor.execute(setQuery)
-        print(len(output))
+
         for i in output:
             self.processPlans(i["Plan"])
 
     def aqp(self, query, setQuery):
+        """
+        Executes query and returns the aqp.
+        :param query: query to be executed
+        :param setQuery: Combination of planner method configuration
+        :return: aqp
+        """
         self.cursor.execute(setQuery)
 
         self.cursor.execute("EXPLAIN (FORMAT JSON)" + query)
@@ -177,9 +180,9 @@ class Database:
 
     def processPlans(self, qep):
         """
-        Recursively grab all the scans type nodes in a QEP/AQP which can be used for queryPlanDict later
-        :param qep:
-        :return: None. Results is store in scanDict dictionary
+        Recursively grab all the scans, merge join and hash join type nodes in a QEP/AQP which can be used for comparison later.
+        :param qep: generated qep
+        :return: None.
         """
         if qep == {}:
             return
