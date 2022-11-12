@@ -243,7 +243,11 @@ class Annotation:
         else:
             result += f"based on {bold(str(qep['Sort Key']))}"
         
-        qep_total_cost = qep["Total Cost"] - qep["Plans"][0]["Total Cost"]
+        if len(qep["Plans"]) == 1:
+            qep_total_cost = qep["Total Cost"] - qep["Plans"][0]["Total Cost"]
+        elif len(qep["Plans"]) == 2:
+            qep_total_cost = qep["Total Cost"] - qep["Plans"][0]["Total Cost"] - qep["Plans"][1]["Total Cost"]
+            
         qep_total_cost = round(qep_total_cost, 3)
         result += f" with a cost of {bold(str(qep_total_cost))}."
 
