@@ -30,16 +30,24 @@ class FlaskApp:
                 if self.db.checkValidQuery(query):
                     qep = self.db.query(query)
                     self.db.generateQueryPlan(qep["Plan"])
-                    
-                    qp = QueryPlan(qep["Plan"])
-                    # self.db.altQueryPlans
-                    graphfile = qp.save_graph_file()
+
+                    # Generate graph for qep and aqp
+                    qepgraph = QueryPlan(qep["Plan"])
+                    graphfile = qepgraph.save_graph_file()
+
+                    aqpgraphfiles = []
+                    for aqp in self.db.altQueryPlans:
+                        temp = QueryPlan(aqp['Plan'])
+                        aqpgraphfiles.append(temp.save_graph_file())
+
+
                     render_args = {
                         "query": sqlparse.format(query, reindent=True, keyword_case='upper'),
                         "annotations": self.db.queryPlanList,
                         "total_cost": qep["Plan"]["Total Cost"],
-                        "total_operations": qp.get_num_nodes(),
-                        "qep_graph": graphfile
+                        "total_operations": qepgraph.get_num_nodes(),
+                        "qep_graph": graphfile,
+                        "aqp_graph": aqpgraphfiles
                     }
                     # restore to default
                     self.db.queryPlanList = []
