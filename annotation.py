@@ -270,6 +270,6 @@ class Annotation:
             for key in qep["Group Key"]:
                 result += bold(key) + ","
             
-            result = result[:-1] + "group keys."
+            result = result[:-1] + " group keys."
 
         return result

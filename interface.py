@@ -20,7 +20,7 @@ class FlaskApp:
         @self.app.route('/', methods=["GET"])
         def requestQuery():
             #Currently hardcoded till linked to db
-            db_schemas = self.db.retrieveAllDbs()
+            db_schemas = [self.db.db_name, "Other"]
             return render_template('home.html', db_schemas = db_schemas)
 
         @self.app.route("/queryplan", methods=["POST", "GET"])

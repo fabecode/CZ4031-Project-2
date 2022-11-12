@@ -18,6 +18,7 @@ class Database:
             password=self.config['postgresql']['password'],
             port=self.config['postgresql']['port']
         )
+        self.db_name = self.config['postgresql']['database']
         self.cursor = self.conn.cursor()
         self.possible = ["enable_bitmapscan",
                          "enable_hashagg",
