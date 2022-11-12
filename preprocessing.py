@@ -48,7 +48,7 @@ class Database:
         """
         if qep == {}:
             return
-        
+
         ##################### SCAN TYPE NODES #####################
         if "Relation Name" in qep and qep["Relation Name"] in self.scanDict:
             output = self.annotation.compareScanAnno(qep, self.scanDict)

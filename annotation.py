@@ -68,7 +68,9 @@ class Annotation:
         result += f"{blueItalicBold(qep['Node Type'])} is done on {blue(qep['Relation Name'])} with a cost of {bold(str(qep['Total Cost']))}. "
         for key, value in seen.items():
             if key != qep["Node Type"]:
-                result += f"{blueItalicBold(qep['Node Type'])} is chosen as as it is more efficient than {italic(key)}, which costs {value/seen[qep['Node Type']]:.3f} times more with a cost of {value} in the AQP. "
+                ratio = value/seen[qep['Node Type']]
+                if ratio >= 1:
+                    result += f"{blueItalicBold(qep['Node Type'])} is chosen as as it is more efficient than {italic(key)}, which costs {ratio:.3f} times more with a cost of {value} in the AQP. "
         if qep["Node Type"] == "Index Scan":
             result += self.indexAnno(qep)
         elif qep["Node Type"] == "Index Only Scan":
@@ -94,7 +96,7 @@ class Annotation:
                 seen[j["Node Type"]] = j["Total Cost"]
             elif j["Node Type"] in seen and seen[j["Node Type"]] > j["Total Cost"]:
                 seen[j["Node Type"]] = j["Total Cost"]
-        seen[qep["Node Type"]] = qep["Total Cost"] - qep["Plans"][0]["Total Cost"] - qep["Plans"][1]["Total Cost"]
+        # seen[qep["Node Type"]] = qep["Total Cost"] - qep["Plans"][0]["Total Cost"] - qep["Plans"][1]["Total Cost"]
 
         joinCost = qep['Total Cost'] - qep["Plans"][0]["Total Cost"] - qep["Plans"][1]["Total Cost"]
         joinCost = round(joinCost, 3)
