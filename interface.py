@@ -74,7 +74,7 @@ class Node:
 
         Args:
             node_type (str):  Node type of itself
-            cost (str): Total cost until this node
+            cardinality (str): Total cost until this node
         """
         self.node_type = node_type
         self.total_cost = cost
@@ -86,7 +86,7 @@ class Node:
         Returns:
             str: String representation of Node.
         """
-        return f"{self.node_type}\ncost: {self.total_cost}\n{self.label}"
+        return f"{self.node_type}\nCardinality: {self.total_cost}\n{self.label}"
 
 
 class QueryPlan:
@@ -111,7 +111,7 @@ class QueryPlan:
     def create_node(self,query):
         node_type = query['Node Type']
         if node_type in ["Bitmap Heap Scan", "Index Scan", "Index Only Scan","Seq Scan"]:
-            return Node(node_type,query["Total Cost"],"table: "+query["Relation Name"])
+            return Node(node_type,query["Total Cost"],"Table: "+query["Relation Name"])
         elif node_type == "Hash Join":
             return Node(node_type,query["Total Cost"],query["Hash Cond"])
         elif node_type == "Merge Join":
