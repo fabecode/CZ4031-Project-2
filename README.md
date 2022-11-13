@@ -17,7 +17,7 @@
     \copy "region" from '/home/user/Desktop/TPC-H/region.csv' DELIMITER ',' CSV;
     ``` 
     Repeat the command to load all data into PostgreSQL. 
-6. One can also refer to this documentation to set up the TPC-H database: Setting up [TPC-H dataset - VerdictDB Documentation](https://docs.verdictdb.org/tutorial/tpch/#postgresql)
+6. One can also refer to this documentation to set up the TPC-H database: [Setting up TPC-H dataset - VerdictDB Documentation](https://docs.verdictdb.org/tutorial/tpch/#postgresql)
 
 ## Overall Instructions to run the flask web application
 1. Clone the repository from Github or download the zip file
