@@ -1,8 +1,7 @@
 # CZ4031-Project-2 (Group 12)
 ## Creating database and uploading of data into PostgreSQL
 1. PostgreSQL is available for download here: [PostgreSQL: Downloads](https://www.postgresql.org/download/) 
-2. TPC-H dataset can be downloaded from here: [TPC Download Current Specs/Source](https://www.tpc.org/tpc_documents_current_versions/current_specifications5.asp)
-Alternatively, the already processed TPC-H dataset into CSV can be downloaded from here from OneDrive: [TPC-H dataset](https://entuedu-my.sharepoint.com/personal/royl0003_e_ntu_edu_sg/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Froyl0003%5Fe%5Fntu%5Fedu%5Fsg%2FDocuments%2FTPC%2DH%20dataset&ga=1)
+2. TPC-H dataset can be downloaded from here: [TPC Download Current Specs/Source](https://www.tpc.org/tpc_documents_current_versions/current_specifications5.asp). Alternatively, the already processed TPC-H dataset into CSV can be downloaded from OneDrive: [TPC-H dataset](https://entuedu-my.sharepoint.com/personal/royl0003_e_ntu_edu_sg/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Froyl0003%5Fe%5Fntu%5Fedu%5Fsg%2FDocuments%2FTPC%2DH%20dataset&ga=1)
 3. Open up Windows command prompt.
     a. If the PostgreSQL bin is already added to PATH, then enter the command below and your password when prompted.   
     ```console
