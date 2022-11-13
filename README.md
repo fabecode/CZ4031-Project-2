@@ -29,7 +29,7 @@
     ```console
     pip install -r requirement.txt
     ```
-4. Change the parameters in **database.ini** file to your own postgresql settings. For example, if the name of the database you used is **TPC-H**, and Postgresql is running on **port 5432 (default)**, **hosted locally**, **username and password** of the user that owns the database are both **postgres** then your database.ini will look as follows.
+4. Change the parameters in **database.ini** file to your own PostgreSQL settings. For example, if the name of the database you used is **TPC-H**, and PostgreSQL is running on **port 5432 (default)**, **hosted locally**, **username and password** of the user that owns the database are both **postgres** then your database.ini will look as follows.
     ```
     [postgresql]    
     host=localhost    
@@ -38,7 +38,7 @@
     password=postgres   
     port=5432   
     ```
-5. Ensure that the postgresql service is running. 
+5. Ensure that the PostgreSQL service is running. 
 6. Run project.py to use our web application by in command prompt the following command
     ```console
     python project.py
