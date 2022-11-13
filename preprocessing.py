@@ -22,7 +22,7 @@ class Database:
             keepalives_idle=5,
             keepalives_interval=2,
             keepalives_count=2,
-            options='-c statement_timeout=6000'
+            options='-c statement_timeout=60000'
         )
         self.conn.set_isolation_level(0)
         self.db_name = self.config['postgresql']['database']
